@@ -6,7 +6,7 @@ Servo servos[4];  // create servo object to control a servo
 int servoPins[4] = { 23, 22, 21, 32 };
 
 //gripper consts
-int GRIP_MAX = 180;
+int GRIP_MAX = 140;
 int GRIP_MIN = 120;
 
 //arms
@@ -177,93 +177,59 @@ String serialloop()
 }
 
 void loop() {
-  /*
-    String input = serialloop();
-    String cmds[30];
-    char* txt = (char*)input.c_str();
-    char* token = strtok(txt, " ");
-     
-    while(token != NULL) {
-      Serial.println(token);
-      
-      token = strtok(NULL, " ");
-  */
+  
   String input = serialloop();
-  Serial.println("loop: " + input);
-  
-  if(input == "u")
-  {
-    up();
-  }
-  else if(input == "d")
-  {
-    down();
-  }
-  else if(input == "r")
-  {
-    right();
-  }
-  else if(input == "l")
-  {
-    left();
-  }
-  else if(input == "b")
-  {
-    back();
-  }
-  else if(input == "f")
-  {
-    front();
-  }
-  
-  if(input == "u\'")
-  {
-    up(true);
-  }
-  else if(input == "d\'")
-  {
-    down(true);
-  }
-  else if(input == "r\'")
-  {
-    right(true);
-  }
-  else if(input == "l\'")
-  {
-    left(true);
-  }
-  else if(input == "b\'")
-  {
-    back(true);
-  }
-  else if(input == "f\'")
-  {
-    front(true);
-  }
-  
-  if(input == "u2")
-  {
-    up(true, true);
-  }
-  else if(input == "d2")
-  {
-    down(true, true);
-  }
-  else if(input == "r2")
-  {
-    right(true,true);
-  }
-  else if(input == "l2")
-  {
-    left(true, true);
-  }
-  else if(input == "b2")
-  {
-    back(true, true);
-  }
-  else if(input == "f2")
-  {
-    front(true, true);
+  String cmds[30];
+  char* txt = (char*)input.c_str();
+  char* token = strtok(txt, " ");
+
+  int i = 0;
+  while(token != NULL) {
+    Serial.println(token);
+    cmds[i] = token;
+    i++;
+    token = strtok(NULL, " ");
   }
 
+  i = 0;
+  while(cmds[i] != NULL)
+  {
+    String cmd = cmds[i];
+    bool prime = false;
+    bool twice = false;
+    if(cmd.length() > 1) {
+      if(cmd[1] == '\'')
+      {
+        prime = true;        
+      }
+      else
+      {
+        twice = true;
+      }
+    }
+
+    switch (cmd[0])
+    {
+      case 'U':
+        up(prime, twice);
+        break;
+      case 'D':
+        down(prime, twice);
+        break;
+      case 'R':
+        right(prime, twice);
+        break;
+      case 'L':
+        left(prime, twice);
+        break;
+      case 'B':
+        back(prime, twice);
+        break;
+      case 'F':
+        front(prime, twice);
+        break;
+    }
+    
+    i++;
+  }
 }
