@@ -3,24 +3,28 @@
 Servo servos[4];  // create servo object to control a servo
 // 16 servo objects can be created on the ESP32
 
-int servoPins[4] = { 23, 22, 21, 32 };
+const int servoPins[4] = { 23, 22, 21, 32 };
 
 //gripper consts
-int GRIP_MAX = 140;
-int GRIP_MIN = 120;
+const int GRIP_MAX = 170;
+const int GRIP_MIN = 115;
 
 //arms
-int RIGHT_ARM = 1;
-int LEFT_ARM = 2;
+const int RIGHT_ARM = 0;
+const int LEFT_ARM = 1;
 
 //directions
-int RIGHT = 180;
-int MID = 90;
-int LEFT = 0;
+const int RIGHT = 180;
+const int MID = 90;
+const int LEFT = 0;
 
 //axes
-int Z = 1;
-int X = 2;
+const int Z = 1;
+const int X = 2;
+
+//standerd operating speed 0.17 sec/60deg
+const int SWEEP_ANGLE = 1; // deg
+const int SWEEP_DELAY = 10; // ms
 
 void setup() {
   Serial.begin(115200);
@@ -48,40 +52,48 @@ void setup() {
   servos[3].write(120);
 }
 
-void turn(int arm, int angle, int sec = 1.5) {
-  if(arm == RIGHT_ARM)
+void turn(int arm, int angle, int ms = SWEEP_DELAY) {
+  int servoID = arm*2; // right 0, left 2
+  int pos = servos[servoID].read();
+  if(ms==0) 
   {
-    servos[0].write(angle);
-  }
-  else
+    servos[servoID].write(angle);
+    // delay(1000);
+  } 
+  else 
   {
-    servos[2].write(angle);    
+    for(; pos >= angle; pos -= SWEEP_ANGLE)
+    {
+      servos[servoID].write(pos);
+      delay(ms);
+    }
+    for(; pos <= angle; pos += SWEEP_ANGLE)
+    {
+      servos[servoID].write(pos);
+      delay(ms);
+    }   
   }
-  delay(sec*1000);
+  delay(1000);
 }
 
 void openGrip(int arm, int sec = 1.5)
 {
-  if(arm == RIGHT_ARM)
+  int servoID = arm*2 + 1; // right 1, left 3
+  for(int pos = servos[servoID].read(); pos <= GRIP_MAX; pos += SWEEP_ANGLE)
   {
-    servos[1].write(180);
-  }
-  else
-  {
-    servos[3].write(180);    
+      servos[servoID].write(pos);
+      delay(SWEEP_DELAY);
   }
   delay(sec*1000);
 }
 
 void closeGrip(int arm, int sec = 1.5)
 {
-  if(arm == RIGHT_ARM)
+  int servoID = arm*2 + 1; // right 1, left 3
+  for(int pos = servos[servoID].read(); pos >= GRIP_MIN; pos -= SWEEP_ANGLE)
   {
-    servos[1].write(120);
-  }
-  else
-  {
-    servos[3].write(120);    
+    servos[servoID].write(pos);
+    delay(SWEEP_DELAY);
   }
   delay(sec*1000);
 }
@@ -93,20 +105,20 @@ void rotateCube(int dir, int axis = Z)
   {
     //rotates cube along Z axis
     openGrip(RIGHT_ARM);
-    turn(LEFT_ARM, dir);
+    turn(LEFT_ARM, dir, 0);
     closeGrip(RIGHT_ARM);
     openGrip(LEFT_ARM);
-    turn(LEFT_ARM, MID);
+    turn(LEFT_ARM, MID, 0);
     closeGrip(LEFT_ARM);    
   }
   else
   {
     //rotates cube along X axis
     openGrip(LEFT_ARM);
-    turn(RIGHT_ARM, dir);
+    turn(RIGHT_ARM, dir, 0);
     closeGrip(LEFT_ARM);
     openGrip(RIGHT_ARM);
-    turn(RIGHT_ARM, MID);
+    turn(RIGHT_ARM, MID, 0);
     closeGrip(RIGHT_ARM);
   }
 }
@@ -115,7 +127,7 @@ void turnCube(int arm, int dir)
 {
   turn(arm, dir);
   openGrip(arm);
-  turn(arm, MID);
+  turn(arm, MID, 0);
   closeGrip(arm);
 }
 
@@ -140,6 +152,8 @@ void right(bool prime = false, bool twice = false) {
   
   turnCube(RIGHT_ARM, prime ? LEFT : RIGHT);
   if(twice) turnCube(RIGHT_ARM, prime ? LEFT : RIGHT);
+
+  rotateCube(LEFT);
 }
 
 void left(bool prime = false, bool twice = false) {
@@ -147,6 +161,8 @@ void left(bool prime = false, bool twice = false) {
   
   turnCube(RIGHT_ARM, prime ? RIGHT : LEFT); 
   if(twice) turnCube(RIGHT_ARM, prime ? RIGHT : LEFT); 
+
+  rotateCube(RIGHT);
 }
 
 void back(bool prime = false, bool twice = false) {
