@@ -6,8 +6,8 @@ Servo servos[4];  // create servo object to control a servo
 const int servoPins[4] = { 23, 22, 21, 32 };
 
 //gripper consts
-const int GRIP_MAX = 170;
-const int GRIP_MIN = 115;
+const int GRIP_MAX = 180;
+const int GRIP_MIN = 120;
 
 //arms
 const int RIGHT_ARM = 0;
@@ -24,7 +24,9 @@ const int X = 2;
 
 //standerd operating speed 0.17 sec/60deg
 const int SWEEP_ANGLE = 1; // deg
-const int SWEEP_DELAY = 10; // ms
+const int SWEEP_DELAY = 5; // ms
+
+const int SCAN_DELAY = 5000;
 
 void setup() {
   Serial.begin(115200);
@@ -44,12 +46,12 @@ void setup() {
   // for an accurate 0 to 180 sweep
 
   //right arm
-  servos[0].write(90);
-  servos[1].write(120);
+  servos[0].write(MID);
+  servos[1].write(GRIP_MIN);
 
   //left arm
-  servos[2].write(90);
-  servos[3].write(120);
+  servos[2].write(MID);
+  servos[3].write(GRIP_MIN);
 }
 
 void turn(int arm, int angle, int ms = SWEEP_DELAY) {
@@ -127,19 +129,32 @@ void turnCube(int arm, int dir)
 {
   turn(arm, dir);
   openGrip(arm);
-  turn(arm, MID, 0);
+  turn(arm, 90, 0);
   closeGrip(arm);
 }
 
-void up(bool prime = false, bool twice = false) {
+void up(bool prime = false, bool twice = false, String next[] = NULL) {
   rotateCube(RIGHT);
-  rotateCube(RIGHT);
+  rotateCube(RIGHT);    
+
   
   turnCube(RIGHT_ARM, prime ? LEFT : RIGHT);
   if(twice) turnCube(RIGHT_ARM, prime ? LEFT : RIGHT);
-  
+
+
   rotateCube(LEFT);
-  rotateCube(LEFT);
+  rotateCube(LEFT);  
+//  int i = 0;
+//  while(next[i] != NULL)
+//  {
+//    if(next[i][0] == 'D')
+//    {
+//      rotateCube(LEFT);
+//      rotateCube(LEFT);    
+//    }
+//    i++;
+//  }
+
 }
 
 void down(bool prime = false, bool twice = false) {
@@ -147,22 +162,54 @@ void down(bool prime = false, bool twice = false) {
   if(twice) turnCube(RIGHT_ARM, prime ? LEFT : RIGHT);
 }
 
-void right(bool prime = false, bool twice = false) {
-  rotateCube(RIGHT);
+void left(bool prime = false, bool twice = false, String next[] = NULL) {
+  rotateCube(RIGHT);    
   
   turnCube(RIGHT_ARM, prime ? LEFT : RIGHT);
   if(twice) turnCube(RIGHT_ARM, prime ? LEFT : RIGHT);
 
+
+ 
   rotateCube(LEFT);
+//  int i = 0;
+//  while(next[i] != NULL)
+//  {
+//    if(next[i][0] == 'B')
+//    {  
+//      rotateCube(LEFT);
+//    }
+//    else if(next[i][0] == 'L')
+//    {
+//      rotateCube(LEFT);
+//      rotateCube(LEFT);
+//    }
+//    i++;
+//  }
+
 }
 
-void left(bool prime = false, bool twice = false) {
+void right(bool prime = false, bool twice = false, String next[] = NULL) {
   rotateCube(LEFT);
   
-  turnCube(RIGHT_ARM, prime ? RIGHT : LEFT); 
-  if(twice) turnCube(RIGHT_ARM, prime ? RIGHT : LEFT); 
+  turnCube(RIGHT_ARM, prime ? LEFT : RIGHT); 
+  if(twice) turnCube(RIGHT_ARM, prime ? LEFT : RIGHT); 
 
   rotateCube(RIGHT);
+//  int i = 0;
+//  while(next[i] != NULL)
+//  {
+//    if(next[i][0] == 'B')
+//    {  
+//      rotateCube(RIGHT);
+//    }
+//    else if(next[i][0] == 'R')
+//    {
+//      rotateCube(RIGHT);
+//      rotateCube(RIGHT);
+//    }
+//    i++;
+//  }
+
 }
 
 void back(bool prime = false, bool twice = false) {
@@ -170,15 +217,63 @@ void back(bool prime = false, bool twice = false) {
   if(twice) turnCube(LEFT_ARM, prime ? LEFT : RIGHT);
 }
 
-void front(bool prime = false, bool twice = false) {
+void front(bool prime = false, bool twice = false, String next[] = NULL) {
   rotateCube(RIGHT, X);
-  rotateCube(RIGHT, X);
+  rotateCube(RIGHT, X); 
 
   turnCube(LEFT_ARM, prime ? LEFT : RIGHT);
   if(twice) turnCube(LEFT_ARM, prime ? LEFT : RIGHT);
 
+
   rotateCube(LEFT, X);
   rotateCube(LEFT, X);
+//
+//  int i = 0;
+//  while(next[i] != NULL)
+//  {
+//    if(next[i][0] == 'B')
+//    {
+//      rotateCube(LEFT, X);
+//      rotateCube(LEFT, X);
+//    }
+//    i++;
+//  }
+}
+
+void scan() {
+  delay(SCAN_DELAY);
+  rotateCube(LEFT, X);
+  delay(SCAN_DELAY);
+  rotateCube(LEFT, X);
+  delay(SCAN_DELAY);
+  rotateCube(LEFT, X);
+  delay(SCAN_DELAY);
+  rotateCube(LEFT, X);
+
+  //scan white
+  rotateCube(LEFT, Z);
+  rotateCube(LEFT, X); 
+  rotateCube(RIGHT, Z);
+  delay(SCAN_DELAY);
+  rotateCube(LEFT, Z);
+  rotateCube(RIGHT, X); 
+  rotateCube(RIGHT, Z);
+
+  //scan yellow
+  rotateCube(RIGHT, Z);
+  rotateCube(LEFT, X); 
+  rotateCube(LEFT, Z);
+  delay(SCAN_DELAY);
+  rotateCube(RIGHT, Z);
+  rotateCube(RIGHT, X); 
+  rotateCube(LEFT, Z);
+}
+
+void test() {
+   openGrip(RIGHT_ARM);
+   closeGrip(RIGHT_ARM);
+   openGrip(LEFT_ARM);
+   closeGrip(LEFT_ARM);
 }
 
 String serialloop()
@@ -187,12 +282,15 @@ String serialloop()
   {
     String currentLine = Serial.readStringUntil('\n'); 
 
-    Serial.println("Received: " + currentLine);
+    if(currentLine != NULL && currentLine.length() > 0)
+    {
+      Serial.println("Received: " + currentLine);     
+    }
     return currentLine;
   }
 }
 
-void loop() {
+void start() {
   
   String input = serialloop();
   String cmds[30];
@@ -208,9 +306,17 @@ void loop() {
   }
 
   i = 0;
+  int j = 1;
+  String next[30];
   while(cmds[i] != NULL)
   {
     String cmd = cmds[i];
+    int k = 0;
+    while(cmds[j] != NULL)
+    {
+      next[k] = cmds[j];
+      j++;
+    }
     bool prime = false;
     bool twice = false;
     if(cmd.length() > 1) {
@@ -224,28 +330,43 @@ void loop() {
       }
     }
 
+    Serial.println("Step " + String(i + 1) + " Cmd " + String(cmd));
+    
     switch (cmd[0])
     {
       case 'U':
-        up(prime, twice);
+        up(prime, twice, next);
         break;
       case 'D':
         down(prime, twice);
         break;
       case 'R':
-        right(prime, twice);
+        right(prime, twice, next);
         break;
       case 'L':
-        left(prime, twice);
+        left(prime, twice, next);
         break;
       case 'B':
         back(prime, twice);
         break;
       case 'F':
-        front(prime, twice);
+        front(prime, twice, next);
+        break;
+      case 'S':
+        scan();
+        break;
+      case 'T':
+        test();
         break;
     }
     
     i++;
+    Serial.println("Completed Step " + String(i));
+    j = i + 1;
   }
+}
+
+void loop()
+{
+   start();
 }
