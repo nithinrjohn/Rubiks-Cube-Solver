@@ -1,5 +1,5 @@
 cffi==1.14.4
-future==0.18.2
+future==0.18.3
 kociemba==1.2.1
 numpy==1.22.0
 opencv-python==4.5.1.48
